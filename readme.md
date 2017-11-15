@@ -26,9 +26,17 @@ It does not handle emission lines, please mask them before fitting.
 
 
 # to link to model files
-Please set the directory path to the BC03 model data or use the environment variable MODELBC03_DIR. For example, in ~/.bashrc file, add line:
+Please download the spectrum library from the following repo. SDSS credentials maybe needed. 
 
-    export MODELBC03_DIR='path/spectra_bc03_downgraded/'
+    svn checkout https://svn.sdss.org/data/sdss/stellarpopmodels/tags/v1_0_2/ stellar_population_models
+
+Please set the directory path to the `spectra_bc03_downgraded/` folder. 
+
+    m = modelBC03.modelBC03(directory='path_to/spectra_bc03_downgraded/')
+
+Alternatively use the environment variable MODELBC03_DIR. For example, in ~/.bashrc file, add line:
+
+    export MODELBC03_DIR='path_to/spectra_bc03_downgraded/'
 
 
 ## installing
