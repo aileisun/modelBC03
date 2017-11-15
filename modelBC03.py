@@ -92,6 +92,12 @@ class modelBC03(object):
 		if not np.all(ws == self.ws):
 			self.regrid(ws=ws, z=z)
 
+		if np.nanmean(spec) < 1.e-10:
+			scaling = 1./np.nanmean(spec)
+		else:
+			scaling = 1.
+		spec = spec*scaling
+
 		if self.extinction_law == 'none':
 			temps = self.temps
 			temps_regrid = self.temps_regrid
@@ -102,15 +108,15 @@ class modelBC03(object):
 			self.temps_ext = temps
 			self.temps_regrid_ext = temps_regrid
 
-		reg, bestfit_regrid = linear_reg(data=spec, temps=temps_regrid, type='lasso', alpha=1.e-6, positive=True)
+		reg, bestfit_regrid = linear_reg(data=spec, temps=temps_regrid, type='lasso', alpha=1.e-6, positive=True, max_iter=100000)
 
 		self.regression = reg
-		self.coef = reg.coef_
-		self.intercept = reg.intercept_
+		self.coef = (reg.coef_)/scaling
+		self.intercept = (reg.intercept_)/scaling
 
-		self.bestfit = np.dot(reg.coef_, temps) + reg.intercept_
+		self.bestfit = (np.dot(reg.coef_, temps) + reg.intercept_)/scaling
 		self.ws_bestfit = self.ws*(1.+z)
-		self.bestfit_regrid = bestfit_regrid
+		self.bestfit_regrid = (bestfit_regrid)/scaling
 
 
 	def predict(self, ws):
@@ -149,7 +155,7 @@ class modelBC03(object):
 		temps_regrid_highpass = np.array([smooth(temp, n=10) for temp in temps_regrid_highpass])
 
 		# find the bestfit template for highpass, which gives prediction on unreddened spec. 
-		reg_highpass, __ = linear_reg(spec_highpass, temps_regrid_highpass, type='lasso', alpha=1.e-6, positive=True, max_iter=5000)
+		reg_highpass, __ = linear_reg(spec_highpass, temps_regrid_highpass, type='lasso', alpha=1.e-6, positive=True, max_iter=10000)
 		predicted = np.dot(self.temps_regrid.T, reg_highpass.coef_) + reg_highpass.intercept_
 
 		# get empirial reddening ratio
@@ -312,7 +318,7 @@ class modelBC03(object):
 		return self.directory+'spectrum_BC03_stelib_chab_Z{mettag}_age{agetag}.dat'.format(mettag=mettag, agetag=agetag)
 
 
-def linear_reg(data, temps, type='lasso', alpha=1.e-3, positive=True, max_iter=5000): 
+def linear_reg(data, temps, type='lasso', alpha=1.e-3, positive=True, max_iter=10000): 
 	"""
 	fit temps to data using general linear regression. 
 
@@ -345,29 +351,6 @@ def linear_reg(data, temps, type='lasso', alpha=1.e-3, positive=True, max_iter=5
 
 	return reg, bestfit
 
-
-
-def butter_highpass_param(lowcut=0.001, fs=1., order=3):
-	""" 
-	Create params to make Butterworth filter. The cut off is at a scale of (0.5 * fs)/lowcut in the unit of pixel. 
-
-	lowcut [1/Angstrom]
-	fs [pix per Angstrom]
-
-	"""
-	nyq = 0.5 * fs
-	low = lowcut / nyq
-	b, a = ss.butter(order, low, btype='highpass')
-	return b, a
-
-
-def butter_highpass_filter(data, lowcut=0.001, fs=1., order=3):
-	""" 
-	filter the data with butterwoth highpass filter. see butter_highpass_param for details. 
-	"""
-	b, a = butter_highpass_param(lowcut, fs, order=order)
-	y = ss.lfilter(b, a, data)
-	return y
 
 
 def regrid_temps(ws, temps, ws_to, z=0.):

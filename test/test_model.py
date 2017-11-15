@@ -4,8 +4,10 @@ import astropy.table as at
 import bubbleimg
 from .. import modelBC03
 
+import os 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_obj = dir_path+'/data/SDSSJ084240+005347/'
 
-# dir_model = '/Users/aisun/Documents/astro/projects/feedback/survey/hsc/sandbox/sps/sklearnlinear/spectra_bc03_downgraded/'
 
 @pytest.fixture
 def get_model():
@@ -45,7 +47,6 @@ def test_modelBC03_regrid(get_model):
 
 	m = get_model
 
-	dir_obj = '/Users/aisun/Documents/astro/projects/feedback/survey/hsc/sandbox/sps/data/SDSSJ084240+005347/'
 	obj = bubbleimg.obsobj.obsObj(ra=130.6686971883207, dec=0.8966510710968996, dir_obj=dir_obj, obj_naming_sys='sdss_precise')
 
 	s = bubbleimg.spector.Spector(obj=obj, survey='hsc')
@@ -62,8 +63,7 @@ def test_modelBC03_regrid(get_model):
 def test_modelBC03_fit(get_model):
 
 	m = get_model
-	
-	dir_obj = '/Users/aisun/Documents/astro/projects/feedback/survey/hsc/sandbox/sps/data/SDSSJ084240+005347/'
+	print(dir_obj)	
 	obj = bubbleimg.obsobj.obsObj(ra=130.6686971883207, dec=0.8966510710968996, dir_obj=dir_obj, obj_naming_sys='sdss_precise')
 
 	s = bubbleimg.spector.Spector(obj=obj, survey='hsc')
@@ -85,8 +85,6 @@ def test_modelBC03_fit_extinction():
 	m = modelBC03(extinction_law='linear')
 	# m = modelBC03(extinction_law='calzetti00')
 
-
-	dir_obj = '/Users/aisun/Documents/astro/projects/feedback/survey/hsc/sandbox/sps/data/SDSSJ084240+005347/'
 	s = bubbleimg.spector.Spector(dir_obj=dir_obj, survey='hsc')
 
 	m._fit_extinction(s.ws, s.spec, z=s.z)
